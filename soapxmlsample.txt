@@ -1,0 +1,170 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Diagnostics;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml;
+using Newtonsoft.Json;
+using System.Xml.Linq;
+using System.Xml.Serialization;
+using Newtonsoft.Json.Linq;
+using Json;
+
+namespace MiRapiditoClient
+{
+    public class Action2
+    {
+        static void Main(string[] args)
+        {
+            Trace.WriteLine("Trace Information Starting ACTION2 ");
+            //creating object of program class to access methods  
+            Action2 obj = new Action2();
+            obj.getdata();
+        }
+
+        public void getdata()
+        {
+            var _url = "http://www.example.com/APP/webapp.svc";
+            var _action = "http://example.com/APP/GetCustomer";
+
+            XmlDocument soapEnvelopeXml = CreateSoapEnvelope();
+            HttpWebRequest webRequest = CreateWebRequest(_url, _action);
+            InsertSoapEnvelopeIntoWebRequest(soapEnvelopeXml, webRequest);
+
+            // begin async call to web request.
+            IAsyncResult asyncResult = webRequest.BeginGetResponse(null, null);
+
+            // suspend this thread until call is complete. You might want to
+            // do something usefull here like update your UI.
+            asyncResult.AsyncWaitHandle.WaitOne();
+
+            // get the response from the completed web request.
+
+            //string soapResult;
+            using (WebResponse webResponse = webRequest.EndGetResponse(asyncResult))
+            using (StreamReader rd = new StreamReader(webResponse.GetResponseStream()))
+            {
+                string sresultstring = rd.ReadToEnd();
+                //soapResult = rd.ReadToEnd();
+
+                XmlDocument document = new XmlDocument();
+                document.LoadXml(sresultstring);  //loading soap message as string
+
+                var valuetoreplace1 = "</";
+                var valuetoreplace2 = "<";
+                var inititalreplace = sresultstring.Replace("</s:", valuetoreplace1);
+                var finalreplace = inititalreplace.Replace("<s:", valuetoreplace2);
+
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(finalreplace);
+
+                string jsonText = JsonConvert.SerializeXmlNode(doc);
+                dynamic stuff = JObject.Parse(jsonText);
+
+                string statusdesc = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.StatusDesc;
+                string statuscode = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.ResponseStatus;
+
+                string customerID = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.CustomerId;
+                string Partnerid = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.Partnerid;
+                string Mobile = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.Mobile;
+                string Title = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.Title;
+                string FirstName = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.FirstName;
+                string LastName = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.LastName;
+                string Address = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.Address;
+                string City = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.City;
+                string State = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.State;
+                string CountryCode = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.CountryCode;
+                string Pincode = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.Pincode;
+                string Email = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.Email;
+                string TransLimitvalue = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.TransLimitvalue;
+                string CustomerBalance = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.CustomerBalance;
+                string WalletFlag = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.WalletFlag;
+                string Status = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.Status;
+                string IDNumberType = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.IDNumberType;
+                string IDNumber = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.IDNumber;
+                string KYCFlag = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.KYCFlag;
+                string DOB = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.DOB;
+                string PlaceofBirth = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.PlaceofBirth;
+                string MaritalStatus = stuff.Envelope.Body.GetCustomerResponse.GetCustomerResult.CustomerDetails.MaritalStatus;
+
+                Console.WriteLine("StatusDescription: "+statusdesc);
+                Console.WriteLine("StatusCode: "+statuscode);
+                Console.WriteLine("CustomerID: "+customerID);
+                Console.WriteLine("Partnerid: " + Partnerid);
+                Console.WriteLine("Mobile: " + Mobile);
+                Console.WriteLine("Title: " + Title);
+                Console.WriteLine("FirstName: " + FirstName);
+                Console.WriteLine("LastName: " + LastName);
+                Console.WriteLine("Address: " + Address);
+                Console.WriteLine("City: " + City);
+                Console.WriteLine("State: " + State);
+                Console.WriteLine("CountryCode: " + CountryCode);
+                Console.WriteLine("Pincode: " + Pincode);
+                Console.WriteLine("Email: " + Email);
+                Console.WriteLine("TransLimitvalue: " + TransLimitvalue);
+                Console.WriteLine("CustomerBalance: " + CustomerBalance);
+                Console.WriteLine("WalletFlag: " + WalletFlag);
+                Console.WriteLine("Status: " + Status);
+                Console.WriteLine("IDNumberType: " + IDNumberType);
+                Console.WriteLine("IDNumber: " + IDNumber);
+                Console.WriteLine("KYCFlag: " + KYCFlag);
+                Console.WriteLine("DOB: " + DOB);
+                Console.WriteLine("PlaceofBirth: " + PlaceofBirth);
+                Console.WriteLine("MaritalStatus: " + MaritalStatus);
+
+            }
+            //Console.Write(soapResult);
+
+        }
+
+        public HttpWebRequest CreateWebRequest(string url, string action)
+        {
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
+            webRequest.Headers.Add("SOAPAction", action);
+            webRequest.ContentType = "text/xml;charset=\"utf-8\"";
+            webRequest.Accept = "text/xml";
+            webRequest.Method = "POST";
+            return webRequest;
+        }
+
+        public XmlDocument CreateSoapEnvelope()
+        {
+            XmlDocument soapEnvelop = new XmlDocument();
+            soapEnvelop.LoadXml(@"
+<soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:rem=""http://example.com"">
+<soapenv:Header/>
+<soapenv:Body>
+<rem:GetCustomer>
+<rem:CustomerRequest>
+<rem:Authentication>
+<rem:AuthCode>USERNAME</rem:AuthCode>
+<rem:AuthPass>F387EB91E39DDD7392DB19066554C37F265119AC</rem:AuthPass>
+<rem:ChannelId>?</rem:ChannelId>
+<rem:ProcessId>?</rem:ProcessId>
+<rem:SessionId>?</rem:SessionId>
+<rem:RequestId>?</rem:RequestId>
+<rem:Channel>Web</rem:Channel>
+<rem:IMEINumber>?</rem:IMEINumber>
+<rem:IPAddress>?</rem:IPAddress>
+<rem:RetailerId>TTTLE0000</rem:RetailerId>
+<rem:CheckSum>?</rem:CheckSum>
+</rem:Authentication>
+</rem:CustomerRequest>
+</rem:GetCustomer>
+</soapenv:Body>
+</soapenv:Envelope>");
+            return soapEnvelop;
+        }
+
+        public void InsertSoapEnvelopeIntoWebRequest(XmlDocument soapEnvelopeXml, HttpWebRequest webRequest)
+        {
+            using (Stream stream = webRequest.GetRequestStream())
+            {
+                soapEnvelopeXml.Save(stream);
+            }
+        }
+    }
+}
